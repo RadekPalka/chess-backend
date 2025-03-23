@@ -19,13 +19,16 @@ const broadcastRooms = () => {
 };
 
 io.on('connection', (socket) => {
-	console.log('Connection');
 	broadcastRooms();
 	socket.on('joinRoom', (roomName, userName) => {
-		console.log(roomName, socket.id, userName);
 		const room = rooms.find((room) => room.name === roomName);
 		room.players.add(userName);
+
+		const clients = io.sockets.adapter.rooms.get(room.name);
+		if (!clients || clients.size < 2) socket.join(room.name);
+		if (clients.size === 2) {
+			io.to(room.name).emit('full-room', Array.from(room.players));
+		}
 		broadcastRooms();
-		console.log(room);
 	});
 });
